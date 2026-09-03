@@ -1,23 +1,182 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <meta name="theme-color" content="#000000" />
-    <title>ELECTRAL</title>
     <meta name="description" content="ELECTRAL — Official site." />
+    <title>ELECTRAL</title>
     <style>
-      *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;touch-action:none;overscroll-behavior:none;font-family:Arial,Helvetica,sans-serif}main,canvas{position:fixed;inset:0;width:100%;height:100%}main{background:#000}.brand-mark{position:absolute;z-index:2;top:50%;left:50%;width:min(84vw,960px);height:auto;transform:translate(-50%,-50%);mix-blend-mode:screen;user-select:none;pointer-events:none}.grain{position:absolute;inset:-50%;pointer-events:none;opacity:.045;mix-blend-mode:screen;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E");animation:grain .24s steps(2) infinite}footer{position:absolute;z-index:2;bottom:max(24px,env(safe-area-inset-bottom));left:50%;width:100%;transform:translateX(-50%);padding:0 20px;color:rgba(255,255,255,.68);font-size:10px;font-weight:500;letter-spacing:.18em;line-height:1.5;text-align:center}@keyframes grain{0%{transform:translate(0)}25%{transform:translate(2%,-3%)}50%{transform:translate(-3%,2%)}75%{transform:translate(3%,3%)}100%{transform:translate(-2%,-2%)}}@media(prefers-reduced-motion:reduce){.grain{animation:none}}
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; overscroll-behavior: none; touch-action: none; background: #000; color: #fff; }
+      main { position: fixed; inset: 0; isolation: isolate; background: #000; }
+      canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+      footer { position: absolute; z-index: 2; bottom: max(24px, env(safe-area-inset-bottom)); left: 50%; width: 100%; transform: translateX(-50%); padding: 0 20px; color: #fff; font: 500 10px/1.5 Arial, Helvetica, sans-serif; letter-spacing: .18em; text-align: center; user-select: none; }
     </style>
   </head>
   <body>
-    <main><canvas aria-hidden="true"></canvas><img class="brand-mark" src="public/electral-logo.png" alt="ELECTRAL"><div class="grain" aria-hidden="true"></div><footer>©2026 ELECTRAL. All Rights Reserved.</footer></main>
+    <main>
+      <canvas id="visual" aria-hidden="true"></canvas>
+      <footer>©2026 ELECTRAL. All Rights Reserved.</footer>
+    </main>
     <script>
-      const vertex=`attribute vec2 position;void main(){gl_Position=vec4(position,0.,1.);}`;
-      const fragment=`precision highp float;uniform vec2 resolution;uniform float time;float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1)),f.x),f.y);}float f(vec2 p){float v=0.,a=.54;for(int i=0;i<5;i++){v+=a*n(p);p=mat2(1.62,1.18,-1.18,1.62)*p;a*=.48;}return v;}void main(){vec2 u=(gl_FragCoord.xy-.5*resolution)/min(resolution.x,resolution.y);float t=time*.075;vec2 d=vec2(f(u*1.25+vec2(t,-t*.6)),f(u*1.1+vec2(-t*.7,t)));float q=f(u*1.7+d*1.35+vec2(t*.25,0.));float z=sin((u.x*.78+u.y*.42+q*.95)*13.-t*5.)*.5+.5;z=smoothstep(.24,.92,z)*smoothstep(.18,.95,q);float g=exp(-2.6*length(u-vec2(.13*sin(t),-.05)));vec3 c=mix(vec3(0.),vec3(.035),q*.7);c=mix(c,vec3(.075),pow(max(q-.42,0.)*1.65,2.));c+=vec3(.54)*pow(z,5.)*.28;c+=vec3(.025)*g;c*=.68+.2*smoothstep(1.15,.1,length(u));gl_FragColor=vec4(pow(c,vec3(.94)),1.);}`;
-      const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl',{antialias:false,alpha:false});
-      const make=(type,source)=>{const s=gl.createShader(type);gl.shaderSource(s,source);gl.compileShader(s);return s};const p=gl.createProgram();gl.attachShader(p,make(gl.VERTEX_SHADER,vertex));gl.attachShader(p,make(gl.FRAGMENT_SHADER,fragment));gl.linkProgram(p);gl.useProgram(p);const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);const a=gl.getAttribLocation(p,'position');gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,2,gl.FLOAT,false,0,0);const r=gl.getUniformLocation(p,'resolution'),tm=gl.getUniformLocation(p,'time'),reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;function draw(now){const d=Math.min(devicePixelRatio,1.5),w=Math.floor(innerWidth*d),h=Math.floor(innerHeight*d);if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;gl.viewport(0,0,w,h)}gl.uniform2f(r,w,h);gl.uniform1f(tm,reduce?0:now/1000);gl.drawArrays(gl.TRIANGLES,0,6);if(!reduce)requestAnimationFrame(draw)}requestAnimationFrame(draw);
-      const stop=e=>e.preventDefault();document.addEventListener('gesturestart',stop,{passive:false});document.addEventListener('gesturechange',stop,{passive:false});document.addEventListener('gestureend',stop,{passive:false});document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});document.addEventListener('wheel',e=>{if(e.ctrlKey||e.metaKey)e.preventDefault()},{passive:false});document.addEventListener('dblclick',stop,{passive:false});document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&['+','-','=','0'].includes(e.key))e.preventDefault()});
+      (() => {
+        const canvas = document.getElementById('visual');
+        const ctx = canvas.getContext('2d', { alpha: false });
+        const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+        const streaks = [];
+        let width = 0;
+        let height = 0;
+        let frameId = 0;
+        let previousTime = performance.now();
+        let elapsed = 0;
+        let nextCluster = 180;
+        let quietUntil = 0;
+
+        function resize() {
+          const dpr = Math.min(devicePixelRatio || 1, 2);
+          width = innerWidth;
+          height = innerHeight;
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          if (reduceMotion.matches) drawStill();
+        }
+
+        function spawnCluster() {
+          const fromLeft = Math.random() < .52;
+          const edgeBiased = Math.random() < .72;
+          const y = Math.random() * height;
+          const count = 1 + Math.floor(Math.random() * 5);
+          const baseWidth = width * (.16 + Math.random() * .34);
+
+          for (let i = 0; i < count; i++) {
+            const lineWidth = baseWidth * (.48 + Math.random() * .72);
+            const x = edgeBiased
+              ? (fromLeft ? -lineWidth * (.08 + Math.random() * .42) : width - lineWidth * (.92 - Math.random() * .42))
+              : Math.random() * Math.max(1, width - lineWidth);
+
+            streaks.push({
+              x,
+              y: y + (i - count / 2) * (1.2 + Math.random() * 2.8),
+              width: lineWidth,
+              height: Math.random() < .78 ? 1 : 1.5 + Math.random() * 1.5,
+              age: 0,
+              duration: 170 + Math.random() * 520,
+              drift: (fromLeft ? 1 : -1) * (18 + Math.random() * 75),
+              phase: Math.random() * Math.PI * 2,
+              segments: Array.from({ length: 5 + Math.floor(Math.random() * 8) }, () => .28 + Math.random() * .72),
+            });
+          }
+
+          if (Math.random() < .18) quietUntil = elapsed + 900 + Math.random() * 1700;
+        }
+
+        function drawStreak(line, delta) {
+          line.age += delta;
+          const progress = line.age / line.duration;
+          if (progress >= 1) return false;
+
+          const envelope = Math.sin(progress * Math.PI);
+          const flicker = .64 + Math.sin(elapsed * .045 + line.phase) * .22 + Math.random() * .14;
+          const opacity = Math.max(0, Math.min(1, envelope * flicker));
+          const x = line.x + line.drift * line.age / 1000;
+          const jitterX = Math.round((Math.random() - .5) * 5);
+          const jitterY = Math.random() < .12 ? Math.round((Math.random() - .5) * 2) : 0;
+
+          ctx.save();
+          ctx.fillStyle = '#fff';
+          ctx.globalAlpha = opacity * .11;
+          ctx.fillRect(x + jitterX - 8, line.y + jitterY - 2, line.width + 16, line.height + 4);
+
+          let cursor = 0;
+          const gap = Math.max(1, line.width * .006);
+          line.segments.forEach((factor, index) => {
+            const segmentWidth = line.width / line.segments.length * factor;
+            ctx.globalAlpha = opacity * (.36 + Math.random() * .38);
+            ctx.fillRect(x + jitterX + cursor, line.y + jitterY, segmentWidth, line.height);
+            if (opacity > .82 && index % 3 === 0) {
+              ctx.globalAlpha = 1;
+              ctx.fillRect(x + jitterX + cursor + segmentWidth * .24, line.y + jitterY, Math.max(2, segmentWidth * .22), Math.min(1, line.height));
+            }
+            cursor += segmentWidth + gap * (.5 + Math.random() * 2.5);
+          });
+
+          if (line.height > 1 && opacity > .3) {
+            ctx.globalAlpha = opacity * .42;
+            ctx.fillRect(x + jitterX + line.width * .08, line.y - 2, line.width * .72, .5);
+            ctx.fillRect(x + jitterX + line.width * .2, line.y + line.height + 2, line.width * .55, .5);
+          }
+
+          ctx.restore();
+          return true;
+        }
+
+        function drawTexture() {
+          ctx.save();
+          ctx.fillStyle = '#fff';
+          const specks = Math.max(8, Math.floor(width * height / 90000));
+          for (let i = 0; i < specks; i++) {
+            ctx.globalAlpha = Math.random() * .025;
+            ctx.fillRect(Math.random() * width, Math.random() * height, 1, 1);
+          }
+          ctx.restore();
+        }
+
+        function render(delta) {
+          elapsed += delta;
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, width, height);
+          drawTexture();
+
+          if (elapsed >= nextCluster && elapsed >= quietUntil) {
+            spawnCluster();
+            nextCluster = elapsed + 260 + Math.random() * 940;
+          }
+
+          for (let i = streaks.length - 1; i >= 0; i--) {
+            if (!drawStreak(streaks[i], delta)) streaks.splice(i, 1);
+          }
+        }
+
+        function drawStill() {
+          ctx.fillStyle = '#000';
+          ctx.fillRect(0, 0, width, height);
+          drawTexture();
+        }
+
+        function animate(now) {
+          const delta = Math.min(50, now - previousTime);
+          previousTime = now;
+          render(delta);
+          frameId = requestAnimationFrame(animate);
+        }
+
+        function updateMotion() {
+          cancelAnimationFrame(frameId);
+          if (reduceMotion.matches) drawStill();
+          else {
+            previousTime = performance.now();
+            frameId = requestAnimationFrame(animate);
+          }
+        }
+
+        const prevent = event => event.preventDefault();
+        addEventListener('resize', resize);
+        reduceMotion.addEventListener('change', updateMotion);
+        document.addEventListener('gesturestart', prevent, { passive: false });
+        document.addEventListener('gesturechange', prevent, { passive: false });
+        document.addEventListener('gestureend', prevent, { passive: false });
+        document.addEventListener('touchmove', event => { if (event.touches.length > 1) prevent(event); }, { passive: false });
+        document.addEventListener('wheel', event => { if (event.ctrlKey || event.metaKey) prevent(event); }, { passive: false });
+        document.addEventListener('dblclick', prevent, { passive: false });
+        document.addEventListener('keydown', event => {
+          if ((event.ctrlKey || event.metaKey) && ['+', '-', '=', '0'].includes(event.key)) prevent(event);
+        });
+
+        resize();
+        updateMotion();
+      })();
     </script>
   </body>
 </html>
